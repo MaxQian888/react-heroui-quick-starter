@@ -1,6 +1,6 @@
-# React Quick Starter
+# React HeroUI Quick Starter
 
-A modern, full-stack starter template combining **Next.js 16** with **React 19** for web applications and **Tauri 2.9** for cross-platform desktop applications. Built with TypeScript, Tailwind CSS v4, and shadcn/ui components.
+A modern, full-stack starter template combining **Next.js 16** with **React 19** for web applications and **Tauri 2.9** for cross-platform desktop applications. Built with TypeScript, Tailwind CSS v4, and **HeroUI v3** components.
 
 [中文文档](./README_zh.md)
 
@@ -9,11 +9,17 @@ A modern, full-stack starter template combining **Next.js 16** with **React 19**
 - ⚡️ **Next.js 16** with App Router and React 19
 - 🖥️ **Tauri 2.9** for native desktop applications (Windows, macOS, Linux)
 - 🎨 **Tailwind CSS v4** with CSS variables and dark mode support
-- 🧩 **shadcn/ui** component library with Radix UI primitives
-- 📦 **Zustand** for lightweight state management
+- 🧩 **HeroUI v3** — accessible compound components built on React Aria (no provider, BEM class hooks, CSS-driven animations)
+- 🔄 **TanStack Query v5** for server state management
+- 📦 **Zustand** for lightweight client state
+- 📝 **react-hook-form** + **zod** for type-safe forms
+- 🌐 **openapi-fetch** for type-safe API clients (pair with `openapi-typescript`)
 - 🔤 **Geist Font** optimized with next/font
-- 🎯 **TypeScript** for type safety
-- 🎭 **Lucide Icons** for beautiful iconography
+- 🎯 **TypeScript** strict mode
+- 🎭 **@iconify/react** icons (any icon set, on-demand)
+- 🧪 **Vitest** for unit tests, **Playwright** for E2E
+- 🛠️ **Biome** for lint + format (single tool)
+- 🪝 **lefthook** for git hooks
 - 📚 **Fumadocs** documentation site as a pnpm workspace subpackage
 - 📱 Dual deployment: Web app OR Desktop app from the same codebase
 
@@ -155,14 +161,17 @@ The template ships a typed IPC bridge demo. Pattern:
 | `pnpm dev`           | Start Next.js development server on port 3000                  |
 | `pnpm build`         | Build Next.js app for production (outputs to `out/` directory) |
 | `pnpm start`         | Start Next.js production server (after `pnpm build`)           |
-| `pnpm lint`          | Run ESLint to check code quality                               |
-| `pnpm lint:fix`      | Auto-fix ESLint issues                                         |
-| `pnpm format`        | Format all files with Prettier                                 |
-| `pnpm format:check`  | Check formatting without writing                               |
-| `pnpm typecheck`     | Run TypeScript type-check (no emit)                            |
-| `pnpm test`          | Run Jest unit tests                                            |
-| `pnpm test:watch`    | Run Jest in watch mode                                         |
-| `pnpm test:coverage` | Run Jest with coverage report                                  |
+| `pnpm lint`          | Biome lint                                                     |
+| `pnpm lint:fix`      | Biome lint with `--write`                                      |
+| `pnpm format`        | Biome format `--write`                                         |
+| `pnpm format:check`  | Biome format (check only)                                      |
+| `pnpm check`         | Biome check `--write` (lint + format + import sort)            |
+| `pnpm typecheck`     | TypeScript `--noEmit`                                          |
+| `pnpm test`          | Run Vitest (single pass)                                       |
+| `pnpm test:watch`    | Run Vitest in watch mode                                       |
+| `pnpm test:coverage` | Run Vitest with coverage + JUnit reporter                      |
+| `pnpm test:e2e`      | Run Playwright E2E (auto-starts dev server)                    |
+| `pnpm test:e2e:ui`   | Run Playwright in UI mode                                      |
 
 ### Tauri (Desktop) Scripts
 
@@ -182,15 +191,26 @@ The template ships a typed IPC bridge demo. Pattern:
 | `pnpm docs:build` | Build docs for production (`docs/.next/`) |
 | `pnpm docs:start` | Start docs production server on port 3001 |
 
-### Adding UI Components (shadcn/ui)
+### Using HeroUI v3 Components
 
-```bash
-# Add a new component (e.g., Card)
-pnpm dlx shadcn@latest add card
+Components are imported directly from `@heroui/react` — no per-component file lives in this repo:
 
-# Add multiple components
-pnpm dlx shadcn@latest add button card dialog
+```tsx
+import { Button, Card, Modal, toast } from "@heroui/react"
+
+<Card>
+  <Card.Header>
+    <Card.Title>Hello</Card.Title>
+  </Card.Header>
+  <Card.Body>
+    <Button variant="primary" onPress={() => toast.success("Done!")}>
+      Click me
+    </Button>
+  </Card.Body>
+</Card>
 ```
+
+See the [HeroUI v3 docs](https://heroui.com/docs/react/getting-started/quick-start) for the component catalog.
 
 ## Project Structure
 
@@ -201,10 +221,10 @@ react-quick-starter/
 │   ├── page.tsx             # Main landing page
 │   ├── globals.css          # Global styles and Tailwind config
 │   └── favicon.ico          # App favicon
-├── components/              # React components
-│   └── ui/                  # shadcn/ui components (Button, etc.)
-├── lib/                     # Utility functions
-│   └── utils.ts            # Helper functions (cn, etc.)
+├── components/              # Application components (HeroUI imported from @heroui/react)
+├── lib/                     # Utility modules
+│   ├── tauri.ts            # Type-safe wrapper around Tauri invoke()
+│   └── env.ts              # NEXT_PUBLIC_* env-var validator
 ├── public/                  # Static assets (images, SVGs)
 ├── src-tauri/              # Tauri desktop application
 │   ├── src/
@@ -228,10 +248,14 @@ react-quick-starter/
 │   ├── next.config.ts      # Next.js config (no static export)
 │   └── package.json        # Docs package dependencies
 ├── pnpm-workspace.yaml      # pnpm monorepo config
-├── components.json          # shadcn/ui configuration
+├── biome.json              # Biome lint + format config
+├── lefthook.yml            # Git hook orchestration
+├── vitest.config.ts        # Vitest config
+├── vitest.setup.ts         # Vitest globals + mocks
+├── playwright.config.ts    # Playwright E2E config
+├── e2e/                    # Playwright specs
 ├── next.config.ts          # Next.js configuration (main app)
 ├── tsconfig.json           # TypeScript configuration
-├── eslint.config.mjs       # ESLint configuration
 └── package.json            # Root dependencies and scripts
 ```
 
@@ -282,29 +306,31 @@ Edit `src-tauri/tauri.conf.json` to customize your desktop app:
 
 ### Path Aliases
 
-Configured in `components.json` and `tsconfig.json`:
+Configured in `tsconfig.json`:
 
 ```typescript
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { Button } from "@heroui/react"
+import { greet } from "@/lib/tauri"
 ```
 
 Available aliases:
 
 - `@/components` → `components/`
 - `@/lib` → `lib/`
-- `@/ui` → `components/ui/`
 - `@/hooks` → `hooks/`
-- `@/utils` → `lib/utils.ts`
 
-### Tailwind CSS Configuration
+### Tailwind CSS + HeroUI
 
-The project uses Tailwind CSS v4 with:
+`app/globals.css`:
 
-- CSS variables for theming (defined in `app/globals.css`)
-- Dark mode support via `class` strategy
-- Custom color palette using CSS variables
-- shadcn/ui styling system
+```css
+@import "tailwindcss";       /* must come first */
+@import "@heroui/styles";    /* must come after Tailwind */
+```
+
+- Tailwind CSS v4 via `@tailwindcss/postcss`
+- HeroUI v3 ships its own theme (oklch CSS variables) — override under `@layer base`
+- Dark mode: HeroUI reads `data-theme="dark"` on `<html>`
 
 ## Building for Production
 
@@ -428,29 +454,28 @@ See [Tauri Distribution Guide](https://tauri.app/v1/guides/distribution/) for de
    - Edit files in `app/`, `components/`, or `lib/`
    - Changes auto-reload in the browser/desktop app
 
-3. **Add new components**
+3. **Use HeroUI components** — `import { Button, Card, ... } from "@heroui/react"`
+
+4. **Lint and format**
 
    ```bash
-   pnpm dlx shadcn@latest add [component-name]
-   ```
-
-4. **Lint your code**
-
-   ```bash
-   pnpm lint
+   pnpm check       # Biome lint + format + organize imports (with --write)
+   pnpm typecheck   # tsc --noEmit
    ```
 
 5. **Build and test**
 
    ```bash
-   pnpm build  # Test web build
-   pnpm tauri build  # Test desktop build
+   pnpm test        # Vitest
+   pnpm test:e2e    # Playwright (auto-starts dev server)
+   pnpm build       # Test web build (static export to out/)
+   pnpm tauri build # Test desktop build
    ```
 
 ### Best Practices
 
-- **Code Style**: Follow ESLint rules (`pnpm lint`)
-- **Commits**: Conventional Commits are enforced via the `commit-msg` hook (commitlint). After cloning, run `pnpm install` once — the `prepare` script auto-installs the hooks.
+- **Code Style**: Follow Biome rules (`pnpm check`)
+- **Commits**: Conventional Commits enforced via lefthook + commitlint. After cloning, run `pnpm install` once — the `prepare` script runs `lefthook install`.
 - **Components**: Keep components small and reusable
 - **State**: Use Zustand for global state, React hooks for local state
 - **Styling**: Use Tailwind utility classes, avoid custom CSS when possible
@@ -521,13 +546,16 @@ pnpm docs:dev
 
 ### UI & Styling
 
-- [shadcn/ui](https://ui.shadcn.com/) - Component library documentation
-- [Tailwind CSS](https://tailwindcss.com/docs) - Tailwind CSS documentation
-- [Radix UI](https://www.radix-ui.com/) - Radix UI primitives
+- [HeroUI v3](https://heroui.com/docs/react/getting-started/quick-start) - Component library documentation
+- [HeroUI v3 release notes](https://heroui.com/docs/react/releases) - Version history
+- [React Aria Components](https://react-aria.adobe.com/) - Accessibility primitives that back HeroUI
+- [Tailwind CSS v4](https://tailwindcss.com/docs) - Tailwind CSS documentation
 
-### State Management
+### State & Data
 
-- [Zustand](https://zustand-demo.pmnd.rs/) - Zustand documentation
+- [Zustand](https://zustand-demo.pmnd.rs/) - Client-side store
+- [TanStack Query](https://tanstack.com/query/latest) - Server-state cache
+- [openapi-fetch](https://openapi-ts.dev/openapi-fetch/) - Type-safe HTTP client
 
 ### Documentation
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-React + Tauri desktop application starter: Next.js 16 (React 19) + Tauri 2.9 + TypeScript + Tailwind CSS v4 + shadcn/ui + Zustand.
+React + Tauri desktop application starter: Next.js 16 (React 19) + Tauri 2.9 + TypeScript + Tailwind CSS v4 + **HeroUI v3** + Zustand + TanStack Query.
 
 **Dual Runtime Model:**
 
@@ -17,16 +17,19 @@ React + Tauri desktop application starter: Next.js 16 (React 19) + Tauri 2.9 + T
 # Frontend (main app — port 3000)
 pnpm dev              # Start Next.js dev server
 pnpm build            # Build for production (outputs to out/)
-pnpm lint             # Run ESLint
-pnpm lint:fix         # Auto-fix ESLint issues
-pnpm format           # Format with Prettier
-pnpm format:check     # Check formatting without writing
+pnpm lint             # Biome lint
+pnpm lint:fix         # Biome lint with --write
+pnpm format           # Biome format --write
+pnpm format:check     # Biome format (check only)
+pnpm check            # Biome check --write (lint + format + import sort)
 pnpm typecheck        # TypeScript --noEmit
 
 # Testing
-pnpm test             # Run Jest tests
-pnpm test:watch       # Run tests in watch mode
-pnpm test:coverage    # Run tests with coverage report
+pnpm test             # Vitest run (single pass)
+pnpm test:watch       # Vitest watch mode
+pnpm test:coverage    # Vitest with coverage + JUnit reporter
+pnpm test:e2e         # Playwright E2E (auto-starts dev server)
+pnpm test:e2e:ui      # Playwright UI mode
 
 # Desktop (Tauri)
 pnpm tauri dev        # Dev mode with hot reload
@@ -37,9 +40,6 @@ pnpm tauri info       # Check Tauri environment
 pnpm docs:dev         # Start Fumadocs dev server
 pnpm docs:build       # Build docs for production
 pnpm docs:start       # Start docs production server
-
-# Add shadcn/ui components
-pnpm dlx shadcn@latest add <component-name>
 ```
 
 ## Architecture
@@ -57,10 +57,12 @@ Root `pnpm-lock.yaml` is the single lockfile for all packages. Run `pnpm install
 
 ### Frontend Structure (main app)
 
-- `app/` - Next.js App Router (layout.tsx, page.tsx, globals.css)
-- `components/ui/` - All 57 shadcn/ui components pre-installed (**no test files here**)
+- `app/` - Next.js App Router (`layout.tsx`, `page.tsx`, `providers.tsx`, `globals.css`)
+- `components/` - Application components (HeroUI is consumed directly from `@heroui/react`; no `components/ui/` mirror)
 - `hooks/` - Shared hooks (e.g., `use-mobile.ts`)
-- `lib/utils.ts` - `cn()` utility (clsx + tailwind-merge)
+- `lib/tauri.ts` - Type-safe wrapper around Tauri `invoke`
+- `lib/env.ts` - `NEXT_PUBLIC_*` env-var validator
+- `e2e/` - Playwright specs
 
 ### Docs Structure (`docs/`)
 
@@ -80,13 +82,23 @@ Root `pnpm-lock.yaml` is the single lockfile for all packages. Run `pnpm install
 - Collection output: `import { docs } from "collections/server"` (tsconfig alias → `.source/`)
 - Provider: `fumadocs-ui/provider/next` (NOT `fumadocs-ui/provider`)
 
-### Installed shadcn/ui Components
+### HeroUI v3 Usage
 
-All components are pre-installed — import directly, do not run `shadcn add` for these:
+All components import directly from `@heroui/react` (no per-component file in this repo):
 
-`accordion` · `alert` · `alert-dialog` · `aspect-ratio` · `avatar` · `badge` · `breadcrumb` · `button` · `button-group` · `calendar` · `card` · `carousel` · `chart` · `checkbox` · `collapsible` · `combobox` · `command` · `context-menu` · `dialog` · `direction` · `drawer` · `dropdown-menu` · `empty` · `field` · `form` · `hover-card` · `input` · `input-group` · `input-otp` · `item` · `kbd` · `label` · `menubar` · `native-select` · `navigation-menu` · `pagination` · `popover` · `progress` · `radio-group` · `resizable` · `scroll-area` · `select` · `separator` · `sheet` · `sidebar` · `skeleton` · `slider` · `sonner` · `spinner` · `switch` · `table` · `tabs` · `textarea` · `toggle` · `toggle-group` · `tooltip`
+```tsx
+import { Button, Card, Modal, Toast, toast } from "@heroui/react"
+```
 
-`TooltipProvider` is already mounted in `app/layout.tsx` — no extra wrapper needed.
+**v3 conventions you must follow:**
+
+- **No `<HeroUIProvider>`** — v3 removed the provider. Locale-aware components (Calendar, DatePicker) use `<I18nProvider locale="zh-CN">`, mounted in `app/providers.tsx`.
+- **Compound components** — `Card.Header`, `Card.Body`, `Card.Footer`, `Toast.Provider`, etc. Don't flatten props.
+- **`onPress`, not `onClick`** — Buttons fire `onPress` so React Aria handles keyboard + touch correctly.
+- **Variants are semantic** — `primary` / `secondary` / `tertiary` / `outline` / `ghost` / `danger`. Don't pass raw color tokens.
+- **BEM class overrides** — extend in `globals.css` under `@layer components` (e.g., `.button--primary { @apply font-semibold; }`).
+- **Toast is built in** — `import { toast } from "@heroui/react"`. `<Toast.Provider />` is already mounted in `app/providers.tsx`. No `sonner`.
+- **Icons** — use `@iconify/react` (`<Icon icon="mdi:github" />`). HeroUI does not bundle a specific icon set.
 
 ### Tauri Integration
 
@@ -98,25 +110,42 @@ All components are pre-installed — import directly, do not run `shadcn add` fo
 ### Styling System
 
 - **Tailwind v4** via PostCSS (`@tailwindcss/postcss`)
-- CSS variables for theme colors (oklch color space) in `globals.css`
-- Dark mode: class-based (apply `.dark` to parent element)
-- Custom variant: `@custom-variant dark (&:is(.dark *))`
+- `@import "tailwindcss"` followed by `@import "@heroui/styles"` — order matters
+- CSS variables for theme colors (oklch color space)
+- Dark mode: HeroUI reads `data-theme="dark"` on `<html>`
 
 ### Path Aliases
 
-`@/components`, `@/lib`, `@/utils`, `@/ui`, `@/hooks` - all configured in tsconfig.json and components.json
+`@/components`, `@/lib`, `@/hooks`, `@/i18n` — all configured in tsconfig.json.
+
+### Tooling
+
+- **Lint + format**: Biome (single tool — `biome.json`)
+- **Tests**: Vitest (`vitest.config.ts`, `vitest.setup.ts`) + Playwright E2E (`playwright.config.ts`)
+- **Git hooks**: lefthook (`lefthook.yml`) — pre-commit runs Biome + tsc, pre-push runs Vitest, commit-msg runs commitlint
+- **Package manager**: pnpm 10 (`packageManager` pinned)
 
 ## Code Patterns
 
 ```tsx
-// Always use cn() for conditional classes
-import { cn } from "@/lib/utils"
-cn("base-classes", condition && "conditional", className)
+// HeroUI button — onPress + semantic variant
+import { Button } from "@heroui/react"
 
-// Button composition with asChild
-<Button asChild>
-  <Link href="/path">Click me</Link>
+<Button variant="primary" onPress={() => doThing()}>
+  Click me
 </Button>
+```
+
+```tsx
+// Compound layout
+import { Card } from "@heroui/react"
+
+<Card>
+  <Card.Header>
+    <Card.Title>Title</Card.Title>
+  </Card.Header>
+  <Card.Body>Body content</Card.Body>
+</Card>
 ```
 
 ```tsx
@@ -134,4 +163,4 @@ if (isTauri()) {
 - **Docs does NOT use static export**: `docs/next.config.ts` is full server mode — keep them separate
 - **Rust toolchain**: Requires v1.77.2+ for Tauri builds
 - **Docs `.source/` is generated**: run `pnpm docs:dev` or `pnpm docs:build` once before TypeScript resolves `collections/server`
-- shadcn/ui configured with "new-york" style and RSC mode
+- **No `headers()` in `app/layout.tsx`**: Tauri's static export means request headers aren't available at render time. Locale defaults to `zh-CN`; switch via a client hook if you add a language toggle.

@@ -1,75 +1,66 @@
 import { render, screen } from "@testing-library/react"
+import { describe, expect, it, vi } from "vitest"
+
+vi.mock("@iconify/react", () => ({
+  Icon: ({ icon, className }: { icon: string; className?: string }) => (
+    <span aria-hidden className={className} data-icon={icon} />
+  ),
+}))
+
 import Home from "./page"
 
 describe("Home Page", () => {
-  it("renders the Next.js logo", () => {
-    render(<Home />)
-    const logo = screen.getByAltText("Next.js logo")
-    expect(logo).toBeInTheDocument()
-  })
-
-  it("renders the main heading", () => {
+  it("renders the hero heading", () => {
     render(<Home />)
     const heading = screen.getByRole("heading", {
-      name: /to get started, edit the page\.tsx file/i,
+      level: 1,
+      name: /react heroui.*quick starter/i,
     })
     expect(heading).toBeInTheDocument()
   })
 
-  it("renders the description text", () => {
+  it("renders the Quick Start link to HeroUI docs", () => {
     render(<Home />)
-    const description = screen.getByText(/looking for a starting point/i)
-    expect(description).toBeInTheDocument()
+    const link = screen.getByRole("link", { name: /quick start/i })
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute("href", expect.stringContaining("heroui.com"))
+    expect(link).toHaveAttribute("target", "_blank")
+    expect(link).toHaveAttribute("rel", "noopener noreferrer")
   })
 
-  it("renders the Templates link", () => {
+  it("renders the GitHub link", () => {
     render(<Home />)
-    const templatesLink = screen.getByRole("link", { name: /templates/i })
-    expect(templatesLink).toBeInTheDocument()
-    expect(templatesLink).toHaveAttribute("href", expect.stringContaining("vercel.com/templates"))
+    const link = screen.getByRole("link", { name: /view on github/i })
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveAttribute("href", expect.stringContaining("github.com"))
   })
 
-  it("renders the Learning link", () => {
+  it("renders all tech-stack chips", () => {
     render(<Home />)
-    const learningLink = screen.getByRole("link", { name: /learning/i })
-    expect(learningLink).toBeInTheDocument()
-    expect(learningLink).toHaveAttribute("href", expect.stringContaining("nextjs.org/learn"))
+    const stack = ["Next.js 16", "React 19", "Tauri 2", "HeroUI v3", "Tailwind v4", "Vitest"]
+    for (const label of stack) {
+      expect(screen.getByText(label)).toBeInTheDocument()
+    }
   })
 
-  it("renders the Deploy Now button", () => {
+  it("renders the component-showcase section heading", () => {
     render(<Home />)
-    const deployButton = screen.getByRole("link", { name: /deploy now/i })
-    expect(deployButton).toBeInTheDocument()
-    expect(deployButton).toHaveAttribute("href", expect.stringContaining("vercel.com/new"))
-    expect(deployButton).toHaveAttribute("target", "_blank")
-    expect(deployButton).toHaveAttribute("rel", "noopener noreferrer")
+    expect(
+      screen.getByRole("heading", { level: 2, name: /real heroui v3 components/i })
+    ).toBeInTheDocument()
   })
 
-  it("renders the Documentation button", () => {
+  it("renders the Native Bridge section", () => {
     render(<Home />)
-    const docsButton = screen.getByRole("link", { name: /documentation/i })
-    expect(docsButton).toBeInTheDocument()
-    expect(docsButton).toHaveAttribute("href", expect.stringContaining("nextjs.org/docs"))
-    expect(docsButton).toHaveAttribute("target", "_blank")
-    expect(docsButton).toHaveAttribute("rel", "noopener noreferrer")
+    expect(
+      screen.getByRole("heading", { level: 2, name: /talk to rust from react/i })
+    ).toBeInTheDocument()
   })
 
-  it("renders the Vercel logomark", () => {
+  it("renders sample HeroUI buttons inside the Buttons card", () => {
     render(<Home />)
-    const vercelLogo = screen.getByAltText("Vercel logomark")
-    expect(vercelLogo).toBeInTheDocument()
-  })
-
-  it("has correct layout structure", () => {
-    const { container } = render(<Home />)
-    const main = container.querySelector("main")
-    expect(main).toBeInTheDocument()
-    expect(main).toHaveClass("flex", "min-h-screen")
-  })
-
-  it("applies dark mode classes", () => {
-    const { container } = render(<Home />)
-    const wrapper = container.firstChild as HTMLElement
-    expect(wrapper).toHaveClass("dark:bg-black")
+    expect(screen.getByRole("button", { name: /primary/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /secondary/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /danger/i })).toBeInTheDocument()
   })
 })

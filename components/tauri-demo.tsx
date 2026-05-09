@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
 import { greet, isTauri } from "@/lib/tauri"
-import { Button } from "@/components/ui/button"
+import { Button } from "@heroui/react"
+import { useState } from "react"
 
 export function TauriDemo() {
   const [message, setMessage] = useState<string | null>(null)
@@ -10,7 +10,7 @@ export function TauriDemo() {
 
   if (!isTauri()) return null
 
-  async function handleClick() {
+  async function handlePress() {
     setError(null)
     try {
       setMessage(await greet("World"))
@@ -21,7 +21,7 @@ export function TauriDemo() {
 
   return (
     <div className="mt-8 flex flex-col items-center gap-2">
-      <Button onClick={handleClick}>Call Rust greet()</Button>
+      <Button onPress={handlePress}>Call Rust greet()</Button>
       {message && <p className="text-sm">{message}</p>}
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>

@@ -1,9 +1,12 @@
 import { invoke } from "@tauri-apps/api/core"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { greet, isTauri } from "./tauri"
 
-jest.mock("@tauri-apps/api/core")
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(),
+}))
 
-const mockedInvoke = invoke as jest.MockedFunction<typeof invoke>
+const mockedInvoke = vi.mocked(invoke)
 
 describe("lib/tauri", () => {
   beforeEach(() => {

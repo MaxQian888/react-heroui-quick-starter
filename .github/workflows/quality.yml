@@ -3,7 +3,7 @@ name: Code Quality
 # ============================================================================
 # Code Quality & Security Checks
 # ============================================================================
-# Runs ESLint, TypeScript type checking, and security audits.
+# Runs Biome (lint + format), TypeScript type checking, and security audits.
 # This workflow works OUT-OF-THE-BOX without requiring any secrets.
 # ============================================================================
 
@@ -61,12 +61,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run ESLint
-        run: pnpm lint
-        continue-on-error: true
-
-      - name: Check formatting (Prettier)
-        run: pnpm format:check
+      - name: Biome lint + format check
+        run: pnpm biome ci .
 
       - name: TypeScript type checking
         run: pnpm typecheck
