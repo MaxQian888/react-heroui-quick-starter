@@ -2,6 +2,19 @@ import "@testing-library/jest-dom/vitest"
 import React from "react"
 import { vi } from "vitest"
 
+if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
+  window.matchMedia = (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(() => false),
+  })
+}
+
 type MockNextImageProps = React.ComponentPropsWithoutRef<"img"> & {
   priority?: boolean
   fill?: boolean
